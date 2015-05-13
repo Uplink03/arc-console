@@ -32,9 +32,16 @@ if ( !canView( 'Stream' ) )
 }
 
 if ( $user['MonitorIds'] )
-    $midSql = " and Id in (".join( ",", preg_split( '/["\'\s]*,["\'\s]*/', dbEscape($user['MonitorIds']) ) ).")";
+{
+    $monitorIds = preg_split( '/["\'\s]*,["\'\s]*/', $user['MonitorIds'] );
+    $qMarks = join( ",", array_fill( 0, count($monitorIds), "?" ) );
+    $midSql = " and Id in ($qMarks)";
+}
 else
+{
+    $monitorIds = array();
     $midSql = '';
+}
 
 $sql = "select * from Monitors where Function != 'None' $midSql order by Sequence";
 
@@ -44,7 +51,7 @@ $showControl = false;
 $index = 0;
 $monitorCount = 0;
 $monitors = array();
-foreach( dbFetchAll( $sql ) as $row )
+foreach( dbFetchAll( $sql, false, $monitorIds ) as $row )
 {
     if ( !visibleMonitor( $row['Id'] ) )
     {
